@@ -1,16 +1,17 @@
-
 set( @product@_VERSION @cet_dot_version@ )
 set( @product@_UPS_VERSION @version@ )
 
 @PACKAGE_INIT@
 
-if (IS_DIRECTORY "${PACKAGE_PREFIX_DIR}/@product@/@version@/Modules")
-  list(APPEND CMAKE_MODULE_PATH "${PACKAGE_PREFIX_DIR}/@product@/@version@/Modules")
+if (IS_DIRECTORY "@PACKAGE_module_dir@")
+  list(APPEND CMAKE_MODULE_PATH @PACKAGE_module_dir@)
 endif()
 
 @CONFIG_FIND_UPS_COMMANDS@
 
 @CONFIG_FIND_LIBRARY_COMMANDS@
+
+@CONFIG_EXTRA_COMMANDS@
 
 check_required_components(@product@)
 

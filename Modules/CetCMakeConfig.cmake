@@ -8,18 +8,52 @@
 # this requires cmake 2.8.8 or later
 include(CMakePackageConfigHelpers)
 
-include(CetParseArgs)
+include(CMakeParseArguments)
 
 function(_config_package_config_file)
+  cmake_parse_arguments(CPCF "FOR_BUILD" "" "" ${ARGN})
+  if (CPCF_FOR_BUILD)
+    set(bin_dir bin)
+    set(lib_dir lib)
+    set(inc_dir ${product})
+    get_filename_component(fcl_dir ${${product}_fcl_dir} NAME)
+    get_filename_component(gdml_dir ${${product}_gdml_dir} NAME)
+    set(module_dir ${PROJECT_SOURCE_DIR}/Modules)
+    set(CONFIG_EXTRA_COMMANDS
+      "include_directories( ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR} )")
+    set(dest_path ${CETPKG_BUILD}/cmake/${product}Config.cmake)
+    set(extra_args INSTALL_DESTINATION ${CETPKG_BUILD}/cmake
+      INSTALL_PREFIX ${PROJECT_BINARY_DIR}
+      )
+  else()
+    foreach(path_type bin lib inc fcl gdml)
+      set(${path_type}_dir ${${product}_${path_type}_dir})
+    endforeach()
+    set(module_dir "${product}/${version}/Modules")
+    set(CONFIG_EXTRA_COMMANDS "")
+    # add to library list for package configure file
+    foreach( my_library ${CONFIG_LIBRARY_LIST} )
+      string(TOUPPER  ${my_library} ${my_library}_UC )
+      string(TOUPPER  ${product} ${product}_UC )
+      set(CONFIG_FIND_LIBRARY_COMMANDS "${CONFIG_FIND_LIBRARY_COMMANDS}
+set( ${${my_library}_UC}  \$ENV{${${product}_UC}_LIB}/lib${my_library}${CMAKE_SHARED_LIBRARY_SUFFIX} )")
+      #cet_find_library( ${${my_library}_UC} NAMES ${my_library} PATHS ENV ${${product}_UC}_LIB NO_DEFAULT_PATH )" )
+      ##message(STATUS "cet_cmake_config: cet_find_library( ${${my_library}_UC} NAMES ${my_library} PATHS ENV ${${product}_UC}_LIB NO_DEFAULT_PATH )" )
+      ##message(STATUS "cet_cmake_config: set( ${${my_library}_UC}  \$ENV{${${product}_UC}_LIB}/lib${my_library}${CMAKE_SHARED_LIBRARY_SUFFIX} )" )
+    endforeach(my_library)
+    if (NOT ${${product}_inc_dir} MATCHES "NONE")
+      set(CONFIG_EXTRA_COMMANDS "${CONFIG_EXTRA_COMMANDS}
+include_directories ( \$ENV{${${product}_UC}_INC} )" )
+    endif()
+    set(dest_path ${CMAKE_CURRENT_BINARY_DIR}/${product}Config.cmake)
+    set(extra_args INSTALL_DESTINATION ${distdir})
+ endif()
   # Set variables (scope within this function only) with simpler names
   # for use inside package config files as e.g. @PACKAGE_bin_dir@
-  foreach(path_type bin lib inc fcl gdml)
-    set(${path_type}_dir ${${product}_${path_type}_dir})
-  endforeach()
   configure_package_config_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/product-config.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/${product}Config.cmake
-	  INSTALL_DESTINATION ${distdir}
+    ${dest_path}
+    ${extra_args}
     # Use known list of path vars for installation locations so these
     # can be found relative to the location of the productConfig.cmake
     # file
@@ -29,12 +63,13 @@ function(_config_package_config_file)
     inc_dir
     fcl_dir
     gdml_dir
+    module_dir
     )
 endfunction()
 
 macro( cet_write_version_file _filename )
 
-  cet_parse_args( CWV "VERSION;COMPATIBILITY" "" ${ARGN})
+  cmake_parse_arguments( CWV "" "VERSION;COMPATIBILITY" "" ${ARGN})
 
   find_file( versionTemplateFile
              NAMES CetBasicConfigVersion-${CWV_COMPATIBILITY}.cmake.in
@@ -52,7 +87,7 @@ endmacro( cet_write_version_file )
 
 macro( cet_cmake_config  )
 
-  cet_parse_args( CCC "" "NO_FLAVOR" ${ARGN})
+  cmake_parse_arguments( CCC "NO_FLAVOR" "" "" ${ARGN})
 
   if( CCC_NO_FLAVOR )
     set( distdir "${product}/${version}/cmake" )
@@ -66,33 +101,19 @@ macro( cet_cmake_config  )
   #message(STATUS "cet_cmake_config debug: ${CONFIG_LIBRARY_LIST}")
 
   string(TOUPPER  ${product} ${product}_UC )
-  # add to library list for package configure file
-  foreach( my_library ${CONFIG_LIBRARY_LIST} )
-    string(TOUPPER  ${my_library} ${my_library}_UC )
-    string(TOUPPER  ${product} ${product}_UC )
-    set(CONFIG_FIND_LIBRARY_COMMANDS "${CONFIG_FIND_LIBRARY_COMMANDS}
-      set( ${${my_library}_UC}  \$ENV{${${product}_UC}_LIB}/lib${my_library}${CMAKE_SHARED_LIBRARY_SUFFIX} )" )
-    #cet_find_library( ${${my_library}_UC} NAMES ${my_library} PATHS ENV ${${product}_UC}_LIB NO_DEFAULT_PATH )" )
-    ##message(STATUS "cet_cmake_config: cet_find_library( ${${my_library}_UC} NAMES ${my_library} PATHS ENV ${${product}_UC}_LIB NO_DEFAULT_PATH )" )
-    ##message(STATUS "cet_cmake_config: set( ${${my_library}_UC}  \$ENV{${${product}_UC}_LIB}/lib${my_library}${CMAKE_SHARED_LIBRARY_SUFFIX} )" )
-  endforeach(my_library)
   #message(STATUS "cet_cmake_config debug: ${CONFIG_FIND_LIBRARY_COMMANDS}")
 
   # add include path to CONFIG_FIND_LIBRARY_COMMANDS
   ##message(STATUS "cet_cmake_config: ${product}_inc_dir is ${${product}_inc_dir}")
-  if( NOT ${${product}_inc_dir} MATCHES "NONE" )
-    set(CONFIG_FIND_LIBRARY_COMMANDS "${CONFIG_FIND_LIBRARY_COMMANDS}
-      include_directories ( \$ENV{${${product}_UC}_INC} )" )
-  endif()
   ##message(STATUS "cet_cmake_config: CONFIG_INCLUDE_DIRECTORY is ${CONFIG_INCLUDE_DIRECTORY}")
 
   # get perl library directory
   #message( STATUS "config_pm: ${product}_perllib is ${${product}_perllib}")
   #message( STATUS "config_pm: ${product}_ups_perllib is ${${product}_ups_perllib}")
   #message( STATUS "config_pm: ${product}_perllib_subdir is ${${product}_perllib_subdir}")
-  STRING( REGEX REPLACE "flavorqual_dir" "\$ENV{${${product}_UC}_FQ_DIR}" mypmdir "${REPORT_PERLLIB_MSG}" )
+  STRING( REGEX REPLACE "flavorqual_dir" "\${PACKAGE_PREFIX_DIR}" mypmdir "${REPORT_PERLLIB_MSG}" )
   #message( STATUS "config_pm: mypmdir ${mypmdir}")
-  STRING( REGEX REPLACE "product_dir" "\$ENV{${${product}_UC}_DIR}" mypmdir "${REPORT_PERLLIB_MSG}" )
+  STRING( REGEX REPLACE "product_dir" "\${PACKAGE_PREFIX_DIR}" mypmdir "${REPORT_PERLLIB_MSG}" )
   #message( STATUS "config_pm: mypmdir ${mypmdir}")
   # PluginVersionInfo is a special case
   if( CONFIG_PM_VERSION )
@@ -111,7 +132,7 @@ macro( cet_cmake_config  )
     #message( STATUS "config_pm: my_pm_dash ${my_pm_dash}")
     string(TOUPPER  ${my_pm_dash} ${my_pm_name}_UC )
     set(CONFIG_FIND_LIBRARY_COMMANDS "${CONFIG_FIND_LIBRARY_COMMANDS}
-      set( ${${my_pm_name}_UC} ${mypmdir}${my_pm} )" )
+set( ${${my_pm_name}_UC} ${mypmdir}${my_pm} )" )
     message(STATUS "${${my_pm_name}_UC}  ${mypmdir}${my_pm} " )
   endforeach(my_pm)
   foreach( my_pm ${CONFIG_PM_LIST} )
@@ -123,11 +144,12 @@ macro( cet_cmake_config  )
     #message( STATUS "config_pm: my_pm_slash ${my_pm_slash}")
     string(TOUPPER  ${my_pm_slash} ${my_pm_name}_UC )
     set(CONFIG_FIND_LIBRARY_COMMANDS "${CONFIG_FIND_LIBRARY_COMMANDS}
-      set( ${${product}_UC}${${my_pm_name}_UC} ${mypmdir}${my_pm} )" )
+set( ${${product}_UC}${${my_pm_name}_UC} ${mypmdir}${my_pm} )" )
     message(STATUS "${${product}_UC}${${my_pm_name}_UC}  ${mypmdir}${my_pm} " )
   endforeach(my_pm)
 
   _config_package_config_file()
+  _config_package_config_file(FOR_BUILD)
 
   # allowed COMPATIBILITY values are:
   # AnyNewerVersion ExactVersion SameMajorVersion
@@ -143,6 +165,12 @@ macro( cet_cmake_config  )
 	       COMPATIBILITY AnyNewerVersion )
   endif()
 
+  # "Install" files for build.
+  file(COPY
+    ${CMAKE_CURRENT_BINARY_DIR}/${product}ConfigVersion.cmake
+    DESTINATION ${CETPKG_BUILD}/cmake)
+
+  # Install files for install.
   install( FILES ${CMAKE_CURRENT_BINARY_DIR}/${product}Config.cmake
         	 ${CMAKE_CURRENT_BINARY_DIR}/${product}ConfigVersion.cmake
            DESTINATION ${distdir} )

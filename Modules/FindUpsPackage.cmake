@@ -33,59 +33,54 @@ set( ${PNAME_UC}_SEARCH_PATH $ENV{${PNAME_UC}_FQ_DIR} )
 #message(STATUS "_use_find_package: looking for ${PNAME} ${dotver} in ${${PNAME_UC}_SEARCH_PATH}")
 
 if( NOT ${PNAME_UC}_SEARCH_PATH )
-  find_package( ${PNAME} ${dotver} PATHS $ENV{${PNAME_UC}_DIR} )
+  find_package( ${PNAME} ${dotver} PATHS $ENV{${PNAME_UC}_DIR} QUIET)
 else()
-  find_package( ${PNAME} ${dotver} PATHS $ENV{${PNAME_UC}_FQ_DIR} )
+  find_package( ${PNAME} ${dotver} PATHS $ENV{${PNAME_UC}_FQ_DIR} QUIET)
 endif()
 # make sure we found the product
-if( NOT ${${PNAME}_FOUND} )
-  message(FATAL_ERROR "ERROR: ${PNAME} was NOT found ")
-endif()
-set( ${PNAME}_DOT_VERSION ${${PNAME}_VERSION})
-if(  ${PNAME_UC} STREQUAL ${PNAME} )
-  #message(STATUS "_use_find_package: adjusting ${PNAME}")
-  set( ${PNAME_UC}_VERSION ${${PNAME}_SAVE_VERSION})
-endif()
-# This bit of code presume that the cmake config files were built by cetbuildtools!
-# However, if this is a "third party" product, ${PNAME}_UPS_VERSION will NOT be defined.
-if( ${PNAME}_UPS_VERSION )
-  # make sure the version numbers match
-  if(  ${${PNAME_UC}_VERSION} MATCHES ${${PNAME}_UPS_VERSION})
-    #message(STATUS "${PNAME} versions match: ${${PNAME_UC}_VERSION} ${${PNAME}_UPS_VERSION} ")
-  else()
-    message(STATUS "ERROR: There is an inconsistency between the ${PNAME} table and config files ")
-    message(FATAL_ERROR "${PNAME} versions DO NOT match: ${${PNAME_UC}_VERSION} ${${PNAME}_UPS_VERSION} ")
+if( ${${PNAME}_FOUND} )
+  set( ${PNAME}_DOT_VERSION ${${PNAME}_VERSION})
+  if(  ${PNAME_UC} STREQUAL ${PNAME} )
+    #message(STATUS "_use_find_package: adjusting ${PNAME}")
+    set( ${PNAME_UC}_VERSION ${${PNAME}_SAVE_VERSION})
   endif()
-else()
-   _cet_debug_message("_use_find_package: ${PNAME}_UPS_VERSION is undefined, we presume it matches ${${PNAME_UC}_VERSION}")
+  # This bit of code presume that the cmake config files were built by cetbuildtools!
+  # However, if this is a "third party" product, ${PNAME}_UPS_VERSION will NOT be defined.
+  if( ${PNAME}_UPS_VERSION )
+    # make sure the version numbers match
+    if(  ${${PNAME_UC}_VERSION} MATCHES ${${PNAME}_UPS_VERSION})
+      #message(STATUS "${PNAME} versions match: ${${PNAME_UC}_VERSION} ${${PNAME}_UPS_VERSION} ")
+    else()
+      message(STATUS "ERROR: There is an inconsistency between the ${PNAME} table and config files ")
+      message(FATAL_ERROR "${PNAME} versions DO NOT match: ${${PNAME_UC}_VERSION} ${${PNAME}_UPS_VERSION} ")
+    endif()
+  else()
+    _cet_debug_message("_use_find_package: ${PNAME}_UPS_VERSION is undefined, we presume it matches ${${PNAME_UC}_VERSION}")
+  endif()
 endif()
-
 endmacro( _use_find_package )
 
 macro( _use_find_package_noversion PNAME PNAME_UC )
-
 # we use find package to check the version
 # however, if we have some special build such as "nightly", we cannot compare version numbers
 
 # define the cmake search path
 set( ${PNAME_UC}_SEARCH_PATH $ENV{${PNAME_UC}_FQ_DIR} )
 if( NOT ${PNAME_UC}_SEARCH_PATH )
-  find_package( ${PNAME} PATHS $ENV{${PNAME_UC}_DIR} )
+  find_package( ${PNAME} PATHS $ENV{${PNAME_UC}_DIR} QUIET)
 else()
-  find_package( ${PNAME} PATHS $ENV{${PNAME_UC}_FQ_DIR} )
+  find_package( ${PNAME} PATHS $ENV{${PNAME_UC}_FQ_DIR} QUIET)
 endif()
 # make sure we found the product
-if( NOT ${${PNAME}_FOUND} )
-  message(FATAL_ERROR "ERROR: ${PNAME} was NOT found ")
+if( ${${PNAME}_FOUND} )
+  # make sure the version numbers match
+  if(  ${${PNAME_UC}_VERSION} MATCHES ${${PNAME}_UPS_VERSION})
+    #message(STATUS "_use_find_package_noversion: ${PNAME} versions match: ${${PNAME_UC}_VERSION} ${${PNAME}_UPS_VERSION} ")
+  else()
+    message(STATUS "ERROR: _use_find_package_noversion: There is an inconsistency between the ${PNAME} table and config files ")
+    message(FATAL_ERROR "${PNAME} versions DO NOT match: ${${PNAME_UC}_VERSION} ${${PNAME}_UPS_VERSION} ")
+  endif()
 endif()
-# make sure the version numbers match
-if(  ${${PNAME_UC}_VERSION} MATCHES ${${PNAME}_UPS_VERSION})
-  #message(STATUS "_use_find_package_noversion: ${PNAME} versions match: ${${PNAME_UC}_VERSION} ${${PNAME}_UPS_VERSION} ")
-else()
-  message(STATUS "ERROR: _use_find_package_noversion: There is an inconsistency between the ${PNAME} table and config files ")
-  message(FATAL_ERROR "${PNAME} versions DO NOT match: ${${PNAME_UC}_VERSION} ${${PNAME}_UPS_VERSION} ")
-endif()
-
 endmacro( _use_find_package_noversion )
 
 # since variables are passed, this is implemented as a macro
@@ -93,11 +88,11 @@ macro( find_ups_product PRODUCTNAME )
 
 # if ${PRODUCTNAME}_UPS_VERSION is already defined, there is nothing to do
 if( ${PRODUCTNAME}_UPS_VERSION )
-  ##message( STATUS "find_ups_product debug: ${PRODUCTNAME}_UPS_VERSION ${${PRODUCTNAME}_UPS_VERSION} is defined" )
+  message( STATUS "find_ups_product debug: ${PRODUCTNAME}_UPS_VERSION ${${PRODUCTNAME}_UPS_VERSION} is defined" )
 else()
-  ##message( STATUS "find_ups_product debug: ${PRODUCTNAME}_UPS_VERSION ${${PRODUCTNAME}_UPS_VERSION} is NOT defined" )
+  message( STATUS "find_ups_product debug: ${PRODUCTNAME}_UPS_VERSION ${${PRODUCTNAME}_UPS_VERSION} is NOT defined" )
   cmake_parse_arguments( FUP "" "" "" ${ARGN} )
-  #message ( STATUS "find_ups_product debug: unparsed arguments ${FUP_UNPARSED_ARGUMENTS}" )
+  message ( STATUS "find_ups_product debug: unparsed arguments ${FUP_UNPARSED_ARGUMENTS}" )
   set( fup_version "" )
   if( FUP_UNPARSED_ARGUMENTS )
     list( GET FUP_UNPARSED_ARGUMENTS 0 fup_version )
@@ -135,28 +130,22 @@ else()
     #message(STATUS "find_ups_product debug: ${found_product_match} for ${PRODUCTNAME} ")
     # add to product list
     set(CONFIG_FIND_UPS_COMMANDS "${CONFIG_FIND_UPS_COMMANDS}
-    find_ups_product( ${PRODUCTNAME} ${fup_version} )")
+find_ups_product( ${PRODUCTNAME} ${fup_version} )")
     set(cet_product_list ${PRODUCTNAME} ${cet_product_list} )
     #message(STATUS "find_ups_product debug: adding find_ups_product( ${PRODUCTNAME} ${fup_version} )")
     #_cet_debug_message("find_ups_product: ${PRODUCTNAME} version is ${${${PRODUCTNAME}_UC}_VERSION} ")
   endif()
 
-  # MUST use a unique variable name for the config path
-  find_file( ${${PRODUCTNAME}_UC}_CONFIG_PATH 
-             NAMES ${${PRODUCTNAME}_LC}-config.cmake  or ${PRODUCTNAME}Config.cmake
-             PATHS $ENV{${${PRODUCTNAME}_UC}_FQ_DIR}/lib/${PRODUCTNAME}/cmake $ENV{${${PRODUCTNAME}_UC}_DIR}/cmake )
-  if(${${PRODUCTNAME}_UC}_CONFIG_PATH)
-    #_cet_debug_message("find_ups_product: found a cmake configure file in ${${${PRODUCTNAME}_UC}_CONFIG_PATH}")
-    # look for the case where there are no underscores
-    string(REGEX MATCHALL "_" nfound ${${${PRODUCTNAME}_UC}_VERSION} )
-    list(LENGTH nfound nfound)
-    if( ${nfound} EQUAL 0 )
-      _use_find_package_noversion( ${PRODUCTNAME} ${${PRODUCTNAME}_UC} )
-    else()
-      _use_find_package( ${PRODUCTNAME} ${${PRODUCTNAME}_UC} ${fup_version} )
-    endif()
+  # look for the case where there are no underscores
+  string(REGEX MATCHALL "_" nfound ${${${PRODUCTNAME}_UC}_VERSION} )
+  list(LENGTH nfound nfound)
+  if( ${nfound} EQUAL 0 )
+    _use_find_package_noversion( ${PRODUCTNAME} ${${PRODUCTNAME}_UC} )
   else()
-    #_cet_debug_message("find_ups_product: ${PRODUCTNAME} cmake config NOT FOUND")
+    _use_find_package( ${PRODUCTNAME} ${${PRODUCTNAME}_UC} ${fup_version} )
+  endif()
+
+  if (NOT ${${PNAME}_FOUND}) # find_package() failed.
     _check_version( ${PRODUCTNAME} ${${${PRODUCTNAME}_UC}_VERSION} ${fup_version} )
   endif()
 
