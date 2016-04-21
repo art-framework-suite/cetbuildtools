@@ -1,6 +1,10 @@
 set( @product@_VERSION @cet_dot_version@ )
 set( @product@_UPS_VERSION @version@ )
 
+if (COMMAND _cet_debug_message)
+  _cet_debug_message("Loading ${CMAKE_CURRENT_LIST_FILE}")
+endif()
+
 @PACKAGE_INIT@
 
 if (IS_DIRECTORY "@PACKAGE_module_dir@")
