@@ -68,11 +68,13 @@ function(cet_rootcint rc_output_name)
     list(APPEND inc_dirs .)
     list(APPEND RC_GENERATED_CODE ${CMAKE_CURRENT_BINARY_DIR}/${rc_output_name}Cint.h)
   else() # ROOT6
-    SET(RC_RMF ${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}${rc_output_name}.rootmap)
-    SET(RC_PCM ${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}${rc_output_name}_rdict.pcm)
-    SET(RC_OUTPUT_LIBRARY ${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}${rc_output_name}${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(RC_RMF ${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}${rc_output_name}.rootmap)
+    set(RC_PCM ${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}${rc_output_name}_rdict.pcm)
+    set(RC_OUTPUT_LIBRARY ${LIBRARY_OUTPUT_PATH}/${CMAKE_SHARED_LIBRARY_PREFIX}${rc_output_name}${CMAKE_SHARED_LIBRARY_SUFFIX})
+    get_filename_component(RC_RML ${RC_OUTPUT_LIBRARY} NAME)
     list(APPEND RC_FLAGS
       -s ${RC_OUTPUT_LIBRARY}
+      -rml ${RC_RML}
       -rmf ${RC_RMF}
       )
     # Header line fixing only necessary until ROOT fixes their path stripping bug.
