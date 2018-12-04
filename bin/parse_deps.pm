@@ -14,7 +14,7 @@
 #   [perllib     -              perl5lib]
 #
 #   product		version
-#   dependent_product	dependent_product_version [distinguishing qualifier|-] [optional|only_for_build]
+#   dependent_product	dependent_product_version [[!]distinguishing qualifier|-|-default-] [optional|only_for_build]
 #
 #   qualifier dependent_product1       dependent_product2	notes
 #   qual_set1 dependent_product1_qual  dependent_product2_qual	optional notes about this qualifier set
@@ -49,32 +49,29 @@ use List::Util qw(min max);     # Numeric min / max funcions.
 
 use Exporter 'import';
 our (@EXPORT, @setup_list);
-@EXPORT = qw(  get_parent_info 
-               check_for_fragment 
-               compare_versions 
-               get_include_directory 
-               get_bin_directory 
-               get_lib_directory 
-               get_fcl_directory 
-               get_fw_directory 
-               get_wp_directory 
+@EXPORT = qw(  get_parent_info
+               check_for_fragment
+               compare_versions
+               get_include_directory
+               get_bin_directory
+               get_lib_directory
+               get_fcl_directory
+               get_fw_directory
+               get_wp_directory
                get_setfw_list
-               get_gdml_directory 
-               get_perllib 
-               get_python_path 
-               get_product_list 
-               get_qualifier_list 
-               get_qualifier_matrix 
-               compare_qual 
-               match_qual 
-               sort_qual 
-               check_flags 
-               find_default_qual 
-               cetpkg_info_file 
-               print_setup_noqual 
-               print_setup_qual 
-               set_print_command
-               check_cetbuildtools_version 
+               get_gdml_directory
+               get_perllib
+               get_python_path
+               get_product_list
+               get_qualifier_list
+               get_qualifier_matrix
+               compare_qual
+               match_qual
+               sort_qual
+               prods_for_quals
+               find_default_qual
+               cetpkg_info_file
+               check_cetbuildtools_version
                check_for_old_product_deps
                check_for_old_setup_files
                check_for_old_noarch_setup_file
@@ -531,9 +528,8 @@ sub get_product_list {
   my $piter=-1;
   my $i;
   my $line;
-  my @plist;
   my @words;
-  my @dplist;
+  my $plist = {};
   while ( $line=<PIN> ) {
     chop $line;
     if ( index($line,"#") == 0 ) {
@@ -581,33 +577,45 @@ sub get_product_list {
       } elsif ( $words[0] eq "qualifier" ) {
         $get_phash="";
       } elsif ( $get_phash ) {
-        if (( $words[2] ) && ($words[2]eq "-" )) {
-          $words[2] = "";
-        }
         ++$piter;
         ##print "get_product_list:  $piter  $words[0] $words[1] $words[2] $words[3]\n";
-        for $i ( 0 .. $#words ) {
-          $plist[$piter][$i] = $words[$i];
-        }
-        if ( $words[2] ) {
-          my $have_match="false";
-          for $i ( 0 .. $dqiter ) {
-            if ( $dplist[$i] eq $words[2] ) {
-              $have_match="true";
-            }
-          }
-          if ( $have_match eq "false" ) {
-            ++$dqiter;
-            $dplist[$dqiter]=$words[2];
-          }
-        }
+        my ($prod, $version, $qualspec, $modifier) = @words;
+        $plist->{$prod}->{$qualspec || "-"} =
+          {version => $version, ($modifier ? ( $modifier => 1 ) : ()) };
       } else {
         ##print "get_product_list: ignoring $line\n";
       }
     }
   }
   close(PIN);
-  return ($piter, \@plist, $dqiter, \@dplist);
+  return $plist;
+}
+
+sub prods_for_quals {
+  my ($plist, $qualspec) = @_;
+  my $results = {};
+  foreach my $prod (sort keys %{$plist}) {
+    # Find matching version hashes for this product, including default
+    # and empty. $plist is the product list hash as produced by
+    # get_product_list().
+    my $matches =
+      { map { match_qual($_, $qualspec) ?
+                ( $_ => $plist->{${prod}}->{$_} ) : ();
+            } sort keys %{$plist->{$prod}}
+      };
+    # Remove the default entry from the set of matches (if it exists)
+    # and save it.
+    my $default = delete $matches->{"-default-"}; # undef if missing.
+    if (scalar keys %{$matches} <= 1) { # No more than one match allowed.
+      # Use $default if we need to.
+      my $hash = (values %{$matches})[0] || $default;
+      # Save result if we have one.
+      $results->{$prod} = $hash if defined $hash;
+    } else {
+      die "Ambiguous result matching version for $prod against qualifiers $qualspec";
+    }
+  }
+  return $results;
 }
 
 sub get_qualifier_list {
@@ -836,17 +844,12 @@ sub compare_qual {
 }
 
 sub match_qual {
-  my @params = @_;
-  my $q1 = $params[0];
-  my @ql2 = split(/:/,$params[1]);
-  my $retval = 0;
-  my $ii;
-  foreach $ii ( 0 .. $#ql2 ) {
-    if ( $q1 eq $ql2[$ii] ) {
-      $retval = 1;
-    }
-  }
-  return $retval;
+  my ($match_spec, $qualstring) = @_;
+  my @quals = split(/:/, $qualstring);
+  my ($neg, $qual_spec) = ($match_spec =~ m&^(!)?(.*)$&);
+  return ($qual_spec eq '-' or
+          $qual_spec eq '-default-' or
+          ($neg xor grep { $qual_spec eq $_ } @quals));
 }
 
 sub sort_qual {
@@ -869,26 +872,6 @@ sub sort_qual {
   }
   my $squal = join ( ":", @rql );
   return $squal;
-}
-
-sub check_flags {
-  my @params = @_;
-  my $type = uc $params[1];
-  my $cxxflg = "";
-  my $cflg = "";
-  my $line;
-  open(PIN, "< $params[0]") or die "Couldn't open $params[0]";
-  while ( $line=<PIN> ) {
-    chop $line;
-    my @words = split(/\s+/,$line);
-    if ( $words[0] eq "CET_BASE_CXX_FLAG_${type}:" ) {
-      $cxxflg = $words[1];
-    } elsif ( $words[0] eq "CET_BASE_C_FLAG_${type}:" ) {
-      $cflg = $words[1];
-    }
-  }
-  close(PIN);
-  return ($cxxflg,$cflg);
 }
 
 sub find_default_qual {
@@ -939,72 +922,6 @@ sub cetpkg_info_file {
   close(CPG);
   return($cetpkgfile);
 }
-
-sub print_setup_noqual {
-  my @params = @_;
-  my $efl = $params[3];
-  my $thisqual = $params[1];
-  if ( $params[1] eq "-" ) {
-    $thisqual = "";
-  }
-  if (( $params[2] ) && ( $params[2] eq "optional" )) { 
-    print $efl "# setup of $params[0] is optional\n"; 
-    print $efl "unset have_prod\n"; 
-    print $efl "ups exist $params[0] $thisqual\n"; 
-    print $efl "test \"\$?\" = 0 && set_ have_prod=\"true\"\n"; 
-    print $efl "test \"\$have_prod\" = \"true\" || echo \"will not setup $params[0] $thisqual\"\n"; 
-    print $efl "test \"\$have_prod\" = \"true\" && setup -B $params[0] $thisqual \n";
-    print $efl "unset have_prod\n"; 
-  } else {
-    print $efl "setup -B $params[0] $thisqual \n";
-    print $efl "test \"\$?\" = 0 || set_ setup_fail=\"true\"\n"; 
-  }
-  return 0;
-}
-
-  sub print_setup_qual {
-    my @params = @_;
-    my $efl = $params[4];
-    my $thisqual = $params[1];
-    if ( $params[1] eq "-" ) {
-      $thisqual = "";
-    }
-    if (( $params[3] ) && ( $params[3] eq "optional" )) { 
-      print $efl "# setup of $params[0] is optional\n"; 
-      print $efl "unset have_prod\n"; 
-      print $efl "ups exist $params[0] $thisqual -q $params[2]\n"; 
-      print $efl "test \"\$?\" = 0 && set_ have_prod=\"true\"\n"; 
-      print $efl "test \"\$have_prod\" = \"true\" || echo \"will not setup $params[0] $thisqual -q $params[2]\"\n"; 
-      print $efl "test \"\$have_prod\" = \"true\" && setup -B $params[0] $thisqual -q $params[2] \n";
-      print $efl "unset have_prod\n"; 
-    } else {
-      print $efl "setup -B $params[0] $thisqual -q $params[2]\n";
-      print $efl "test \"\$?\" = 0 || set_ setup_fail=\"true\"\n"; 
-      #print TSET "setup -B $qlist[0][$j] $phash{$qlist[0][$j]} -q $ql \n";
-    }
-    return 0;
-  }
-
-  # set_print_command( $plist[$i][0], $plist[$i][1], $plist[$i][3], product_qual, $set_dev_products::SETUP_CMDS);
-  sub set_print_command {
-    my @params = @_;
-    my $efl = $params[4];
-    my $pql = $params[3];
-    if ( $pql eq "-" ) {
-    } elsif ( $pql eq "-nq-" ) {
-      print_setup_noqual( $params[0], $params[1], $params[2], $efl );
-    } elsif ( $pql eq "-b-" ) {
-      print_setup_noqual( $params[0], $params[1], $params[2], $efl );
-    } else {
-      my @qwords = split(/:/,$pql);
-      my $ql="+".$qwords[0];
-      my $j;
-      foreach $j ( 1 .. $#qwords ) {
-        $ql = $ql.":+".$qwords[$j];
-      }
-      print_setup_qual( $params[0], $params[1], $ql, $params[2], $efl );
-    }
-  }
 
 sub check_for_old_product_deps {
   my @params = @_;
