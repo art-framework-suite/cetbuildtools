@@ -7,4 +7,6 @@ endforeach()
 cet_install_files(LIST
   ${CMAKE_CURRENT_BINARY_DIR}/cet_catch_main.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/cet_catch2_main.cpp
-  DIRNAME src)
+  DIRNAME src
+  INSTALL_ONLY
+  )
