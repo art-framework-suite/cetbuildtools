@@ -36,6 +36,11 @@
 #
 #     catch		<version>		-nq-	only_for_build
 #
+#   If your product table has '<format=#>' in the header line, where # >
+#   1, then the expected line is:
+#
+#     catch		<version>		-     only_for_build
+#
 #   in product_deps.
 #
 ####################################

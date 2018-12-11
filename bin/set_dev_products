@@ -17,67 +17,12 @@ use parse_deps;
 use strict;
 use warnings;
 
-my $default_fc = ( $^O eq "darwin" ) ? "-" : "gfortran";
-
-my $compiler_table =
-  {
-   cc => { CC => "cc", CXX => "c++", FC => $default_fc },
-   gcc => { CC => "gcc", CXX => "g++", FC => "gfortran" },
-   icc => { CC => "icc", CXX => "icpc", FC => "ifort" },
-   clang => { CC => "clang", CXX => "clang++", FC => "gfortran" },
-  };
-
-sub print_dep_setup {
-  my ($dep, $dep_info, $dep_quals, $efl) = @_;
-  return if $dep_quals eq "-";
-  my $ql = ($dep_quals eq "-b-" or $dep_quals eq "-nq-") ?
-    "" :
-      sprintf(" -q +\%s", join(":+", split(':', $dep_quals)));
-  my $thisver = ($dep_info->{version} eq "-") ? "" : $dep_info->{version};
-  if ($dep_info->{optional}) {
-    print $efl <<"EOF";
-# setup of $dep is optional
-unset have_prod
-ups exist $dep $thisver$ql && set_ have_prod="true"
-test "\$have_prod" = "true" && echo "will not setup $dep $thisver$ql
-test "\$have_prod" = "true" && setup -B $dep $thisver$ql
-unset have_prod
-EOF
-  } else {
-    print $efl <<"EOF";
-setup -B $dep $thisver$ql
-test "\$?" = 0 || set_ setup_fail="true"
-EOF
-  }
-}
-
-sub error {
-  my ($errfl, @msg) = @_;
-    open(ERR, "> $errfl") or die "Couldn't open $errfl";
-    print ERR <<"EOF";
-
-unsetenv_ CETPKG_NAME
-unsetenv_ CETPKG_VERSION
-unsetenv_ CETPKG_QUAL
-unsetenv_ CETPKG_TYPE
-unsetenv_ CETPKG_CC
-unsetenv_ CETPKG_CXX
-unsetenv_ CETPKG_FC
-EOF
-  chomp @msg;
-  print ERR map { "echo \"ERROR: $_\"\n"; } ("", @msg, "");
-  print ERR "return 1\n";
-  close(ERR);
-  print "$errfl\n";
-  exit 0;
-}
-
 1;
 
 if ( $#ARGV < 2 ) {
-  error("problem_report1",
-        "directory and qualifiers not specified",
-        "USAGE: set_dev_products <input-directory> <output-directory. <-d|-o|-p> <qualifiers>");
+  setup_error("problem_report1",
+              "directory and qualifiers not specified",
+              "USAGE: set_dev_products <input-directory> <output-directory. <-d|-o|-p> <qualifiers>");
 }
 
 my $i;
@@ -112,7 +57,7 @@ for $i ( 2 .. $#ARGV ) {
   } else {
     #$qual = $qual.$ARGV[$i].":";
     #$qdir = $qdir.$ARGV[$i]."-";
-    $input_qual = $input_qual.$ARGV[$i].":";
+    $input_qual = "$input_qual$ARGV[$i]:";
   }
 }
 
@@ -124,7 +69,6 @@ if ( $input_qual ) {
   $qdir =~ s/:/-/g;
 }
 
-
 # use this file for debugging
 my $diagfl = $builddir."/diag_report";
 open(DIAG, "> $diagfl") or die "Couldn't open $diagfl";
@@ -133,17 +77,17 @@ my $srcbase = basename($sourcedir);
 if ( $srcbase eq "ups" ) {
   $inputdir = $sourcedir;
   ##print DIAG "set_dev_products debug info: have the old setup_for_development\n";
-  error("problem_report2",
-        "you have an old copy of setup_for_development",
-        "please issue the following command",
-        "cp \$CETBUILDTOOLS_DIR/templates/setup_for_development.template $inputdir/setup_for_development");
+  setup_error("problem_report2",
+              "you have an old copy of setup_for_development",
+              "please issue the following command",
+              "cp \$CETBUILDTOOLS_DIR/templates/setup_for_development.template $inputdir/setup_for_development");
 } else {
-  $inputdir = $sourcedir."/ups";
+  $inputdir = "$sourcedir/ups";
 }
 ##print DIAG "set_dev_products debug info: source dir is $sourcedir\n";
 ##print DIAG "set_dev_products debug info: input dir is $inputdir\n";
 
-my $pfile=$inputdir."/product_deps";
+my $pfile="$inputdir/product_deps";
 
 if ( check_for_old_product_deps( $pfile ) ) {
   print DIAG "WARNING: you appear to be using an old product_deps with cetbuildtools v4 or later\n";
@@ -152,77 +96,64 @@ if ( check_for_old_product_deps( $pfile ) ) {
 }
 
 # as of cetbuildtools v4_13_00, UPS_OVERRIDE is only set by set_dev_products
-my $sfile=$inputdir."/setup_for_development";
+my $sfile="$inputdir/setup_for_development";
 if ( check_for_old_setup_files( $sfile ) ) {
-  error("problem_report3",
-        "you have an old copy of setup_for_development",
-        "please issue the following command",
-        "cp \\\$CETBUILDTOOLS_DIR/templates/setup_for_development.template $inputdir/setup_for_development");
+  setup_error("problem_report3",
+              "you have an old copy of setup_for_development",
+              "please issue the following command",
+              "cp \\\$CETBUILDTOOLS_DIR/templates/setup_for_development.template $inputdir/setup_for_development");
 }
-$sfile=$inputdir."/setup_deps";
+$sfile="$inputdir/setup_deps";
 if ( -e $sfile ) {
   if ( check_for_old_setup_files( $sfile ) ) {
-    error("problem_report4",
-          "you have an old copy of setup_deps",
-          "please issue the following command",
-          "cp \\\$CETBUILDTOOLS_DIR/templates/setup_deps.template $inputdir/setup_deps");
+    setup_error("problem_report4",
+                "you have an old copy of setup_deps",
+                "please issue the following command",
+                "cp \\\$CETBUILDTOOLS_DIR/templates/setup_deps.template $inputdir/setup_deps");
   }
 }
 
 # as of cetbuildtools v4_17_00, use noarch instead of simple for a null flavored product
-$sfile=$inputdir."/setup_for_development";
+$sfile="$inputdir/setup_for_development";
 if ( check_for_old_noarch_setup_file( $sfile ) ) {
-  error("problem_report5",
-        "you have an old copy of setup_for_development",
-        "please issue the following command",
-        "cp \\\$CETBUILDTOOLS_DIR/templates/setup_for_development.noarch.template $inputdir/setup_for_development");
+  setup_error("problem_report5",
+              "you have an old copy of setup_for_development",
+              "please issue the following command",
+              "cp \\\$CETBUILDTOOLS_DIR/templates/setup_for_development.noarch.template $inputdir/setup_for_development");
 }
 
 my ($product, $version, $default_ver, $default_qual, $have_fq) = get_parent_info( $pfile );
 if ( $qual ) {
-  $qual = $qual.":".$dop;
-  $qdir = $qdir."-".$dop;
+  $qual = "${qual}:${dop}";
+  $qdir = "${qdir}-${dop}";
 } else {
   my $dq = find_default_qual( $pfile );
   if ( $dq ) {
-    $qual = $dq.":".$dop;
-    $qdir = $dq."-".$dop;
+    $qual = "${dq}:${dop}";
+    $qdir = "${dq}-${dop}";
   } elsif ( $noarch ) {
     $qual = "-nq-";
   } else {
-    error("$builddir/error-$product-$version",
-          "no qualifiers specified",
-          "add a defaultqual line to $pfile",
-          "or specify the qualifier(s) on the command line",
-          "USAGE: set_dev_products <input-directory> <output-directory. <-d|-o|-p> <qualifiers>");
+    setup_error("$builddir/error-$product-$version",
+                "no qualifiers specified",
+                "add a defaultqual line to $pfile",
+                "or specify the qualifier(s) on the command line",
+                "USAGE: set_dev_products <input-directory> <output-directory. <-d|-o|-p> <qualifiers>");
   }
 }
 #print DIAG "set_dev_products debug info: qual $qual\n";
 
-my $tmpfl = $builddir."/".$product."-".$version;
+my $tmpfl = "$builddir/$product-$version";
 open($set_dev_products::TSET, "> $tmpfl") or die "Couldn't open $tmpfl";
 
-my ($plist) = get_product_list( $pfile );
-my ($ndeps, %qhash) = get_qualifier_matrix( $pfile, $set_dev_products::TSET );
+my ($phash) = get_product_list( $pfile );
+my ($ndeps, $qhash, $qqhash) = get_qualifier_matrix( $pfile, $set_dev_products::TSET );
 my ($fwlen, $fwlist_ref, $fwdir_ref) = get_setfw_list( $pfile );
 my @fwlist=@$fwlist_ref;
 
 # check for compiler 
-my $compiler;
-if (( $qhash{"compiler"}->{$qual} ) && ( $qhash{"compiler"}->{$qual} ne '-')) {
-  ##print DIAG "set_dev_products debug info: compiler entry for $qual is $qhash{compiler}->{$qual}\n";
-  $compiler = $qhash{"compiler"}->{$qual};
-} else {
-  ##print DIAG "set_dev_products debug info: use default compiler\n";
-  my @quals = split /:/, $qual;
-  if (grep /^(e13|c\d+)$/, @quals) {
-    $compiler = "clang";
-  } elsif (grep /^(e|gcc)\d+$/, @quals) {
-    $compiler = "gcc";
-  } else {
-    $compiler = "cc";           # Native.
-  }
-}
+my $compiler = compiler_for_quals($qhash->{compiler}, $qual);
+
 ##print DIAG "set_dev_products debug info: compiler $compiler\n";
 
 # now look up products in the hash
@@ -236,11 +167,11 @@ open( $set_dev_products::ONLY_CMDS, ">", \$only_for_build_cmds) or
   die "Could not open memory stream to variable ONLY_CMDS.";
 
 my $onlyForBuild="";
-my $deps = prods_for_quals($plist, $qual);
+my $deps = prods_for_quals($phash, $qual);
 
 foreach my $dep (keys %$deps) {
   my $dep_info = $deps->{$dep};
-  my $dep_quals = $qhash{$dep}->{$qual};
+  my $dep_quals = $qhash->{$dep}->{$qual};
   next if (defined $dep_quals and $dep_quals eq "-"); # This product not needed.
   my $fh;
   if ($dep_info->{only_for_build}) {
@@ -250,13 +181,13 @@ foreach my $dep (keys %$deps) {
     $fh = $set_dev_products::ONLY_CMDS;
   } else {
     unless ($dep_quals) { # Required for non-only_for_build products.
-      error("problem_report6",
-            "product list entry $dep has no column in the qualifier table.",
-            "please check \$CETPKG_SOURCE/ups/product_deps");
+      setup_error("problem_report6",
+                  "product list entry $dep has no column in the qualifier table.",
+                  "please check \$CETPKG_SOURCE/ups/product_deps");
     }
     $fh = $set_dev_products::SETUP_CMDS;
   }
-  print_dep_setup($dep, $dep_info, $dep_quals || "-nq-", $fh);
+  print_dep_setup($dep, $dep_info, $dep_quals, $fh);
 }
 close($set_dev_products::SETUP_CMDS);
 close($set_dev_products::ONLY_CMDS);
@@ -276,23 +207,9 @@ my $cetfl = cetpkg_info_file($product,
 
 print $set_dev_products::TSET "tnotnull UPS_OVERRIDE || setenv UPS_OVERRIDE ''\n";
 print $set_dev_products::TSET "expr \"x \$UPS_OVERRIDE\" : '.* -[^- 	]*B' >/dev/null || setenv UPS_OVERRIDE \"\$UPS_OVERRIDE -B\"\n";
-print $set_dev_products::TSET "setenv CETPKG_NAME $product\n";
-print $set_dev_products::TSET "setenv CETPKG_VERSION $version\n";
-if ( $noarch ) {
-  print $set_dev_products::TSET "unsetenv_ CETPKG_QUAL\n";
-  print $set_dev_products::TSET "unsetenv_ CETPKG_TYPE\n";
-  print $set_dev_products::TSET "unsetenv_ CETPKG_CC\n";
-  print $set_dev_products::TSET "unsetenv_ CETPKG_CXX\n";
-  print $set_dev_products::TSET "unsetenv_ CETPKG_FC\n";
-} else {
-  print $set_dev_products::TSET "setenv CETPKG_QUAL $qual\n";
-  print $set_dev_products::TSET "setenv CETPKG_TYPE $type\n";
-  print $set_dev_products::TSET "setenv CETPKG_CC $compiler_table->{${compiler}}->{CC}\n";
-  print $set_dev_products::TSET "setenv CETPKG_CXX $compiler_table->{${compiler}}->{CXX}\n";
-  print $set_dev_products::TSET "setenv CETPKG_FC $compiler_table->{${compiler}}->{FC}\n";
-}
-print $set_dev_products::TSET "setup -B cetpkgsupport \n";
-print $set_dev_products::TSET "test \"\$?\" = 0 || set_ setup_fail=\"true\"\n";
+
+print_setup_boilerplate($set_dev_products::TSET,
+                        $product, $version, $noarch, $qual, $type, $compiler);
 
 foreach $i ( 0 .. $fwlen ) {
   if ( $fwlist[$i]  eq  "ERROR" ) {

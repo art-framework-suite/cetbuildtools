@@ -43,7 +43,7 @@ my $j;
 
 my ($product, $version, $default_ver, $default_qual, $have_fq) = get_parent_info( $pfile );
 my ($have_fragment, @flist) = check_for_fragment( $pfile );
-my $plist = get_product_list($pfile);
+my $phash = get_product_list($pfile);
 my ($ndeps, @qlist) = get_qualifier_list( $pfile, $build_table::TERR );
 
 print "creating table file for $product $version\n";
@@ -51,9 +51,9 @@ print "   default qualifier: $default_qual\n";
 print "   default version: $default_ver\n";
 if ( $build_table::debug eq "true" ) {
   print "   number of dependencies: $ndeps\n";
-  foreach my $dep (keys %{$plist}) {
-    foreach my $qual (keys $plist->{$dep}) {
-      print " $dep $plist->{$dep}->{$qual}->{version} $qual\n";
+  foreach my $dep (keys %{$phash}) {
+    foreach my $qual (keys $phash->{$dep}) {
+      print " $dep $phash->{$dep}->{$qual}->{version} $qual\n";
     }
   }
   foreach $i ( 0 .. $#qlist ) {
@@ -91,7 +91,7 @@ sub create_table_top {
   print TBL "\n";
 }
 
-sub print_dep_setup {
+sub print_dep_setup_table {
   my ($dep, $dep_info, $dep_quals) = @_;
   my $thisver = ($dep_info->{version} eq "-") ? "" : $dep_info->{version};
   my $setup = ($dep_info->{optional}) ? "Optional" : "Required";
@@ -102,7 +102,7 @@ sub print_dep_setup {
 
 sub print_setup {
   my ($prod_quals, $qiter) = @_;
-  my $deps = prods_for_quals($plist, $prod_quals);
+  my $deps = prods_for_quals($phash, $prod_quals);
   foreach my $j ( 1 .. $#{$qlist[$qiter]} ) {
     my $dep = $qlist[0][$j];
     next if $dep eq "compiler";
@@ -110,7 +110,7 @@ sub print_setup {
     unless ($dep_quals eq "-" or $dep_quals eq "-b-") {
       my $dep_info = $deps->{$dep} or
         die "Unable to find version info for dependency $dep where dependent's qualifiers are $prod_quals";
-      print_dep_setup($dep, $dep_info, ($dep_quals eq "-nq-") ? undef : $dep_quals)
+      print_dep_setup_table($dep, $dep_info, ($dep_quals eq "-nq-") ? undef : $dep_quals)
         unless $dep_info->{only_for_build};
     }
   }
