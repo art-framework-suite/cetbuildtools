@@ -456,7 +456,7 @@ macro( cet_set_wp_directory )
     STRING( REGEX REPLACE "product_dir" "${product}/${version}" fdir2 "${fdir1}" )
     set( ${product}_wp_dir ${fdir2}  CACHE STRING "Package wp directory" FORCE )
   endif()
-  message( STATUS "cet_set_wp_directory: ${product}_wp_dir is ${${product}_wp_dir}")
+  #message( STATUS "cet_set_wp_directory: ${product}_wp_dir is ${${product}_wp_dir}")
 endmacro( cet_set_wp_directory )
 
 macro( cet_set_inc_directory )

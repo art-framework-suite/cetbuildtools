@@ -8,6 +8,7 @@
 #   [libdir      fq_dir	        lib]
 #   [bindir      fq_dir         bin]
 #   [fwdir       -              unspecified]
+#   [wpdir       -              unspecified]
 #   [gdmldir     -              gdml]
 #   [perllib     -              perl5lib]
 #   [testdir     product_dir    test]
