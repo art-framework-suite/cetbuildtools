@@ -444,7 +444,7 @@ macro( cet_set_wp_directory )
     OUTPUT_VARIABLE REPORT_WP_DIR_MSG
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
-  message( STATUS "${CET_REPORT} wpdir returned ${REPORT_WP_DIR_MSG}")
+  #message( STATUS "${CET_REPORT} wpdir returned ${REPORT_WP_DIR_MSG}")
   if( ${REPORT_WP_DIR_MSG} MATCHES "DEFAULT" )
      set( ${product}_wp_dir "NONE" CACHE STRING "Package wp directory" FORCE )
   elseif( ${REPORT_WP_DIR_MSG} MATCHES "NONE" )
