@@ -23,24 +23,24 @@ if( FUB_UNPARSED_ARGUMENTS )
   list( GET FUB_UNPARSED_ARGUMENTS 0 minimum )
 endif()
 
-set(boost_liblist chrono 
-                  date_time  
-		  filesystem 
-		  graph
-		  iostreams
-		  locale
-		  prg_exec_monitor
-		  program_options 
-		  random
-		  regex 
-		  serialization
-		  signals
-		  system 
-		  thread 
-		  timer
-		  unit_test_framework 
-		  wave
-		  wserialization )
+set(boost_liblist
+  chrono
+  date_time
+	filesystem
+	graph
+	iostreams
+	locale
+	prg_exec_monitor
+	program_options
+	random
+	regex
+	serialization
+	system
+	thread
+	timer
+	unit_test_framework
+	wave
+	wserialization )
 
 # compare for recursion
 list(FIND cet_product_list boost found_product_match)
@@ -99,7 +99,9 @@ if( ${found_product_match} LESS 0 )
   #set(Boost_ADDITIONAL_VERSIONS "1.48" "1.48.0" "1.49" "1.49.0")
   set(Boost_NO_SYSTEM_PATHS ON)
   # search for Boost ${MATCHVER} or better libraries
-  find_package( Boost ${MATCHVER} COMPONENTS ${boost_liblist} )
+  message(STATUS "Looking for Boost ${MATCHVER} COMPONENTS ${boost_liblist}")
+  find_package( Boost ${MATCHVER} COMPONENTS ${boost_liblist} REQUIRED)
+  message(STATUS "find_package(Boost ...) complete")
 
   #message(STATUS "find_ups_boost debug: Boost include directory is ${Boost_INCLUDE_DIR}" )
   #message(STATUS "find_ups_boost debug: Boost library directory is ${BOOST_LIBRARYDIR}" )
