@@ -52,7 +52,7 @@ print "   default version: $default_ver\n";
 if ( $build_table::debug eq "true" ) {
   print "   number of dependencies: $ndeps\n";
   foreach my $dep (keys %{$phash}) {
-    foreach my $qual (keys $phash->{$dep}) {
+    foreach my $qual (keys %{$phash->{$dep}}) {
       print " $dep $phash->{$dep}->{$qual}->{version} $qual\n";
     }
   }
