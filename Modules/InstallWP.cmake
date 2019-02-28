@@ -1,12 +1,12 @@
 ########################################################################
 # install_wp([SUBDIRNAME dir] LIST files...)
-#   Install FW data in ${${CMAKE_PROJECT_NAME}_fw_dir}/${SUBDIRNAME}
+#   Install WP data in ${${CMAKE_PROJECT_NAME}_wp_dir}/${SUBDIRNAME}
 #
 ####################################
 # Recommended use:
 #
 # install_wp( LIST file_list 
-#             [SUBDIRNAME subdirectory_under_fwdir] )
+#             [SUBDIRNAME subdirectory_under_wpdir] )
 # THERE ARE NO DEFAULTS FOR install_wp
 #
 ########################################################################
@@ -38,17 +38,17 @@ macro( _cet_copy_wp )
 endmacro( _cet_copy_wp )
 
 macro( install_wp   )
-  cmake_parse_arguments( IFW "" "SUBDIRNAME" "LIST" ${ARGN})
-  set( wp_install_dir ${${product}_fw_dir} )
-  _cet_debug_message( "install_wp: fw scripts will be installed in ${wp_install_dir}" )
+  cmake_parse_arguments( IWP "" "SUBDIRNAME" "LIST" ${ARGN})
+  set( wp_install_dir ${${product}_wp_dir} )
+  _cet_debug_message( "install_wp: wp scripts will be installed in ${wp_install_dir}" )
 
-  if( IFW_LIST )
+  if( IWP_LIST )
     _cet_copy_wp( ${ARGN} WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
-    if ( IFW_SUBDIRNAME )
-      INSTALL ( FILES  ${IFW_LIST}
-                DESTINATION ${wp_install_dir}/${IFW_SUBDIRNAME} )
+    if ( IWP_SUBDIRNAME )
+      INSTALL ( FILES  ${IWP_LIST}
+                DESTINATION ${wp_install_dir}/${IWP_SUBDIRNAME} )
     else()
-      INSTALL ( FILES  ${IFW_LIST}
+      INSTALL ( FILES  ${IWP_LIST}
                 DESTINATION ${wp_install_dir} )
     endif()
   else()
