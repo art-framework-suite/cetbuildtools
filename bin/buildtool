@@ -869,7 +869,7 @@ while true; do
       shift
       ;;
     -E)
-      cmake_defs="${cmake_defs}-DCMAKE_EXPORT_COMPILE_COMMANDS "
+      cmake_defs="${cmake_defs}-DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON "
       shift
       ;;
     -G)
