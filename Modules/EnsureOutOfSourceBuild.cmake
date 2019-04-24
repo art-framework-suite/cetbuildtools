@@ -10,9 +10,9 @@ execute_process(COMMAND /bin/pwd -P
   )
 
 if (_cet_pwd_status EQUAL 0)
-  set (_cet_pwd_P_arg "-P" CACHE "/bin/pwd args" INTERNAL )
+  set (_cet_pwd_P_arg "-P" CACHE STRING "/bin/pwd args" INTERNAL )
 else()
-  set (_cet_pwd_P_arg "" CACHE "/bin/pwd args" INTERNAL )
+  set (_cet_pwd_P_arg "" CACHE STRING "/bin/pwd args" INTERNAL )
 endif()
 
 function (_cet_real_dir INPUT_DIR OUTPUT_VAR)
