@@ -306,11 +306,6 @@ if (CT_NEED_ART_COMPAT)
   set(DEFINE_ART_COMPAT -DART_COMPAT=1)
 endif()
 
-# If Boost has been specified but the library hasn't, load the library.
-if ((NOT Boost_UNIT_TEST_FRAMEWORK_LIBRARY) AND BOOST_VERS)
-  find_ups_boost(${BOOST_VERS} unit_test_framework)
-endif()
-
 set(CET_TEST_ENV ""
   CACHE INTERNAL "Environment to add to every test"
   FORCE
@@ -611,8 +606,19 @@ function(cet_test CET_TARGET)
       target_link_libraries(${CET_TARGET} cet_${CATCH_INCLUDE_SUBDIR}_main)
     endif()
     if (CET_USE_BOOST_UNIT)
+      # If Boost has been specified but the library hasn't, load the library.
+      if ((NOT TARGET Boost::unit_test_framework) AND
+          (NOT Boost_UNIT_TEST_FRAMEWORK_LIBRARY) AND
+          BOOST_VERS)
+        find_package(Boost COMPONENTS unit_test_framework REQUIRED)
+      endif()
+
       # Make sure we have the correct library available.
-      if (NOT Boost_UNIT_TEST_FRAMEWORK_LIBRARY)
+      if (Boost_UNIT_TEST_FRAMEWORK_LIBRARY)
+        set(Boost_UTL ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+      elseif (TARGET Boost::unit_test_framework)
+        set(Boost_UTL Boost::unit_test_framework)
+      else()
         message(FATAL_ERROR "cet_test: target ${CET_TARGET} has USE_BOOST_UNIT "
           "option set but Boost Unit Test Framework Library cannot be found: is "
           "boost set up?")
@@ -621,7 +627,7 @@ function(cet_test CET_TARGET)
       set_target_properties(${CET_TARGET} PROPERTIES
         COMPILE_DEFINITIONS "BOOST_TEST_MAIN;BOOST_TEST_DYN_LINK"
         )
-      target_link_libraries(${CET_TARGET} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+      target_link_libraries(${CET_TARGET} ${Boost_UTL})
     endif()
     if (COMMAND find_tbb_offloads)
       find_tbb_offloads(FOUND_VAR have_tbb_offload ${CET_SOURCE})

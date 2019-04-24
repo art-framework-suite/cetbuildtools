@@ -182,6 +182,8 @@ macro(cet_cmake_env)
       "\nIt must be invoked at the top level, not in an included .cmake file.")
   endif()
 
+  option(BUILD_SHARED_LIBS "Build shared libraries for this project." ON)
+
   _get_cetpkg_info()
   
   # temporarily set this policy

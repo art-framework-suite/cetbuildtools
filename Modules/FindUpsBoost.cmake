@@ -1,27 +1,24 @@
 # Boost is a very special case
 #
-# find_ups_boost(  [minimum] )
-#  minimum - optional minimum version
-#  we look for nearly all of the boost libraries
-#      except math, prg_exec_monitor, test_exec_monitor
+# find_ups_boost([BOOST_TARGETS] [<min-ver>])
+#
+# BOOST_TARGETS
+#   If this option is specified, the modern idiom of specifying Boost
+#   libraries by target e.g. Boost::unit_test_framework should be
+#   followed. Note that this idiom will work regardless for
+#   now. Otherwise, a backward compatibilty option will be activated to
+#   create Boost_XXXX_LIBRARY variables for use when linking.
+#
+#  <min-ver> - optional minimum version
+#
+# We look for nearly all of the boost libraries except math,
+# prg_exec_monitor, test_exec_monitor
+#
+# If you need any that aren't specified in boost_liblist below, you
+# should issue a separate CMake find_package(COMPONENTS ... REQUIRED)
+# command subsequent to this one.
 
 include(CheckUpsVersion)
-
-# since variables are passed, this is implemented as a macro
-macro( find_ups_boost )
-
-# Check if the boost library has been set
-# boost is a special case
-SET ( BOOST_VERS $ENV{BOOST_VERSION} )
-IF (NOT BOOST_VERS)
-    MESSAGE (FATAL_ERROR "Boost library has not been setup")
-ENDIF()
-
-cmake_parse_arguments( FUB "" "" "" ${ARGN} )
-set( minimum )
-if( FUB_UNPARSED_ARGUMENTS )
-  list( GET FUB_UNPARSED_ARGUMENTS 0 minimum )
-endif()
 
 set(boost_liblist
   chrono
@@ -41,6 +38,27 @@ set(boost_liblist
 	unit_test_framework
 	wave
 	wserialization )
+
+# since variables are passed, this is implemented as a macro
+macro( find_ups_boost )
+
+# Check if the boost library has been set
+# boost is a special case
+SET ( BOOST_VERS $ENV{BOOST_VERSION} )
+IF (NOT BOOST_VERS)
+    MESSAGE (FATAL_ERROR "Boost library has not been setup")
+ENDIF()
+
+cmake_parse_arguments( FUB "BOOST_TARGETS" "" "" ${ARGN} )
+
+if (NOT FUB_BOOST_TARGETS)
+  set(Boost_NO_BOOST_CMAKE ON)
+endif()
+
+set( minimum )
+if( FUB_UNPARSED_ARGUMENTS )
+  list( GET FUB_UNPARSED_ARGUMENTS 0 minimum )
+endif()
 
 # compare for recursion
 list(FIND cet_product_list boost found_product_match)
