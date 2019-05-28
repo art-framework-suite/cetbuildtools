@@ -306,11 +306,6 @@ if (CT_NEED_ART_COMPAT)
   set(DEFINE_ART_COMPAT -DART_COMPAT=1)
 endif()
 
-set(CET_TEST_ENV ""
-  CACHE INTERNAL "Environment to add to every test"
-  FORCE
-  )
-
 # - Programs and Modules
 # Default comparator
 set(CET_RUNANDCOMPARE "${CMAKE_CURRENT_LIST_DIR}/RunAndCompare.cmake")
