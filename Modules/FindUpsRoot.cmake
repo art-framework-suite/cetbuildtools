@@ -98,6 +98,10 @@ check_ups_version(root ${ROOT_VERSION} v6_10_04
   PRODUCT_MATCHES_VAR ROOT6_HAS_NOINCLUDEPATHS
   )
 
+check_ups_version(root ${ROOT_VERSION} v6_10_04
+  PRODUCT_MATCHES_VAR HAVE_ROOT_NAMESPACE_TARGETS
+  )
+
 include_directories ( ${ROOTSYS}/include )
 
 # Set library variables
@@ -115,6 +119,11 @@ if (HAVE_ROOT6)
   _set_and_check_prog(ROOTCLING ${ROOTSYS}/bin/rootcling)
 else() # ROOT5
   _set_and_check_prog(ROOTCINT ${ROOTSYS}/bin/rootcint)
+endif()
+
+if (HAVE_ROOT_NAMESPACE_TARGETS)
+  # This command exposes all allowed targets to downstream users
+  find_package(ROOT REQUIRED)
 endif()
 
 # define some useful library lists
