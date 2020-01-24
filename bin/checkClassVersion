@@ -17,7 +17,6 @@ from __future__ import print_function
 from optparse import OptionParser
 import ROOT
 import os
-import string
 import sys
 import xml.parsers.expat
 
@@ -350,7 +349,7 @@ def main():
             raise IOError("Cannot obtain temporary filename for write")
         filename = mktemp_pipe.readline()
         mktemp_pipe.close()
-        filename = string.strip(filename)
+        filename = filename.strip()
         if filename == '':
             raise IOError("Cannot obtain temporary filename for write")
         outFile = open(filename, 'w')
