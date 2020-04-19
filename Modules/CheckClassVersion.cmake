@@ -6,9 +6,9 @@ set(CCV_DEFAULT_RECURSIVE FALSE
   CACHE BOOL "Default setting for recursive checks by checkClassVersion (may be time-consuming)."
   )
 
-EXECUTE_PROCESS(COMMAND root-config --has-python
+EXECUTE_PROCESS(COMMAND root-config --features
   RESULT_VARIABLE CCV_ROOT_CONFIG_OK
-  OUTPUT_VARIABLE CCV_ENABLED
+  OUTPUT_VARIABLE CCV_ROOT_CONFIG_OUT
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
@@ -16,7 +16,11 @@ IF(NOT CCV_ROOT_CONFIG_OK EQUAL 0)
   MESSAGE(FATAL_ERROR "Could not execute root-config successfully to interrogate configuration: exit code ${CCV_ROOT_CONFIG_OK}")
 ENDIF()
 
-IF(NOT CCV_ENABLED)
+string(REPLACE " " ";" CCV_ROOT_FEATURES "${CCV_ROOT_CONFIG_OUT}")
+
+IF("pyroot" IN_LIST CCV_ROOT_FEATURES OR "python" IN_LIST CCV_ROOT_FEATURES)
+  SET(CCV_ENABLED 1)
+ELSE()
   MESSAGE("WARNING: The version of root against which we are building currently has not been built "
     "with python support: ClassVersion checking is disabled."
     )
