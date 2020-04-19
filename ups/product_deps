@@ -25,7 +25,7 @@ libdir      -
 bindir      product_dir        bin
 
 product		version
-cmake		v3_14_3
+cmake		v3_17_1
 end_product_list
 
 # note that cetbuildtools depends only on products which have no qualifiers
