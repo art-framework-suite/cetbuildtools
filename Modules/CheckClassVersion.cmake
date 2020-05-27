@@ -30,7 +30,7 @@ function(check_class_version)
   cmake_parse_arguments(CCV
     "UPDATE_IN_PLACE;RECURSIVE;NO_RECURSIVE"
     "CLASSES_DEF_XML"
-    "LIBRARIES;REQUIRED_DICTIONARIES"
+    "ENVIRONMENT;LIBRARIES;REQUIRED_DICTIONARIES"
     ${ARGN}
     )
   IF(CCV_LIBRARIES)
@@ -74,7 +74,7 @@ function(check_class_version)
     endforeach()
     # Add the check to the end of the dictionary building step.
     add_custom_command(OUTPUT ${dictname}_dict_checked
-      COMMAND ${CMAKE_COMMAND} -E env ${CMD_ENV}
+      COMMAND ${CMAKE_COMMAND} -E env ${CMD_ENV} ${CCV_ENVIRONMENT}
       checkClassVersion ${CCV_EXTRA_ARGS}
       -l $<TARGET_PROPERTY:${dictname}_dict,LIBRARY_OUTPUT_DIRECTORY>/${CMAKE_SHARED_LIBRARY_PREFIX}${dictname}_dict
       -x ${CCV_CLASSES_DEF_XML}

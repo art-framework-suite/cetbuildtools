@@ -11,6 +11,7 @@
 #                   [NO_INSTALL]
 #                   [DICT_FUNCTIONS]
 #                   [NO_CHECK_CLASS_VERSION]
+#                   [CCV_ENVIRONMENT <env_list>]
 #                   [REQUIRED_DICTIONARIES <dictionary_list>]
 #                   [RECURSIVE|NO_RECURSIVE]
 #                   [UPDATE_IN_PLACE]
@@ -36,8 +37,9 @@
 # dictionary name.
 #
 # * check_class_version() is run by default. Use NO_CHECK_CLASS_VERSION
-# to disable this behavior. REQUIRED_DICTIONARIES, UPDATE_IN_PLACE and
-# {NO_,}RECURSIVE are passed through to check_class_version.
+# to disable this behavior. CCV_ENVIRONMENT (as ENVIRONMENT),
+# REQUIRED_DICTIONARIES, UPDATE_IN_PLACE, and {NO_,}RECURSIVE are passed
+# through to check_class_version.
 #
 # * Any other macros or functions in this file are for internal use
 # only.
@@ -167,7 +169,7 @@ function ( build_dictionary )
   cmake_parse_arguments( BD
     "NOINSTALL;NO_INSTALL;DICT_FUNCTIONS;USE_PRODUCT_NAME;NO_CHECK_CLASS_VERSION;NO_DEFAULT_LIBRARIES;UPDATE_IN_PLACE;RECURSIVE;NO_RECURSIVE"
     "DICT_NAME_VAR;CLASSES_DEF_XML;CLASSES_H"
-    "DICTIONARY_LIBRARIES;COMPILE_FLAGS;REQUIRED_DICTIONARIES" ${ARGN})
+    "CCV_ENVIRONMENT;DICTIONARY_LIBRARIES;COMPILE_FLAGS;REQUIRED_DICTIONARIES" ${ARGN})
   #message(STATUS "BUILD_DICTIONARY: unparsed arguments: ${BD_UNPARSED_ARGUMENTS}")
   #message(STATUS "BUILD_DICTIONARY: install flag is  ${BD_NO_INSTALL} ")
   #message(STATUS "BUILD_DICTIONARY: COMPILE_FLAGS: ${BD_COMPILE_FLAGS}")
@@ -280,8 +282,9 @@ function ( build_dictionary )
   #message(STATUS "Calling check_class_version with args ${BD_ARGS}")
   if (BD_NO_CHECK_CLASS_VERSION OR NOT DEFINED CCV_DEFAULT_RECURSIVE)
     # Turned off manually, or we're using or building an older art.
-    if (BD_UPDATE_IN_PLACE OR BD_REQUIRED_DICTIONARIES OR RECURSIVE OR NO_RECURSIVE)
-      message(WARNING "BuildDictionary: NO_CHECK_CLASS_VERSION is set: UPDATE_IN_PLACE, REQUIRED_DICTIONARIES, RECURSIVE AND NO_RECURSIVE are ignored.")
+    if (BD_UPDATE_IN_PLACE OR BD_REQUIRED_DICTIONARIES OR
+        BD_RECURSIVE OR BD_NO_RECURSIVE OR BD_CCV_ENVIRONMENT)
+      message(WARNING "BuildDictionary: NO_CHECK_CLASS_VERSION is set: CCV_ENVIRONMENT, UPDATE_IN_PLACE, REQUIRED_DICTIONARIES, RECURSIVE AND NO_RECURSIVE are ignored.")
     endif()
   else ()
     if(BD_UPDATE_IN_PLACE)
@@ -297,6 +300,9 @@ function ( build_dictionary )
       set(BD_CCV_ARGS ${BD_CCV_ARGS} RECURSIVE)
     elsif (BD_NO_RECURSIVE)
       set(BD_CCV_ARGS ${BD_CCV_ARGS} NO_RECURSIVE)
+    endif()
+    if (BD_CCV_ENVIRONMENT)
+      list(APPEND BD_CCV_ARGS ENVIRONMENT ${BD_CCV_ENVIRONMENT})
     endif()
     check_class_version(${BD_LIBRARIES} UPDATE_IN_PLACE ${BD_CCV_ARGS})
   endif()
