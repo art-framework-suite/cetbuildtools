@@ -6,18 +6,26 @@
 #
 ########################################################################
 
+####################################
+# Useful variables and defaults.
+prog=${0##*/}
+fill=${prog//?/ }
+
+# Should we clean the working directory first?
+(( want_clean = 1 ))
+
+####################################
+# Useful functions.
+
 function realdir() {
   local dir="${1:-.}"
   ( cd "$dir" && pwd -P )
 }
 
-prog=${0##*/}
-fill=${prog//?/ }
-
 function usage() {
   cat 1>&2<<EOF
-usage: $prog [--datafiles <files>] [--remove-on-failure <files>] \
-       $fill [--required-files <files>] [--wd <test-working-dir>] [--] \
+usage: $prog [--datafiles <files>] [--dirty] [--remove-on-failure <files>] \\
+       $fill [--required-files <files>] [--wd <test-working-dir>] [--] \\
        $fill <cmd> [<args>...]
 
 Multiple <files> should be separated with semicolons (;).
@@ -31,49 +39,36 @@ function set_datafiles() {
   for i in ${1}; do datafiles+=("$(basename "$i")"); done
 }
 
-getopt -T >/dev/null 2>&1                                               
-if (( $? != 4 )); then                                                  
-  echo "ERROR: GNU getopt required! Check SETUP_GETOPT and PATH." 1>&2  
-  exit 1                                                                
-fi                                                                      
+########################################################################
+# Main.
+########################################################################
 
-TEMP=`getopt -n "$prog" --long datafiles:,debug,remove-on-failure:,required-files:,skip-return-code:,wd: -o + -- "${@}"`
+getopt -T >/dev/null 2>&1
+if (( $? != 4 )); then
+  echo "ERROR: GNU getopt required! Check SETUP_GETOPT and PATH." 1>&2
+  exit 1
+fi
+
+TEMP=`getopt -n "$prog" --long datafiles:,debug,dirty-workdir,remove-on-failure:,required-files:,skip-return-code:,wd: -o + -- "${@}"`
 eval set -- "$TEMP"
 
 while true; do
-    case $1 in
-        --datafiles)
-            set_datafiles "$2"
-            shift; shift;
-            ;;
-        --debug)
-            vopt="v"
-            shift;
-            ;;
-        --remove-on-failure)
-            old_IFS="${IFS}"; IFS=';'; removeOnFailure=($2); IFS=${old_IFS}
-            shift; shift;
-            ;;
-        --required-files)
-            old_IFS="${IFS}"; IFS=';'; requiredfiles=($2); IFS=${old_IFS}
-            shift; shift;
-            ;;
-        --skip-return-code)
-            (( skip_code = ${2} ))
-            shift; shift;
-            ;;
-        --wd)
-            wd="$2"
-            shift; shift;
-            ;;
-        --)
-            shift;
-            break
-            ;;
-        *)
-          echo "Bad argument $1" 1>&2
-          usage 1
-    esac
+  case $1 in
+    --datafiles) set_datafiles "$2"; shift;;
+    --debug) vopt="v";;
+    --dirty-workdir) unset want_clean;;
+    --remove-on-failure)
+      old_IFS="${IFS}"; IFS=';'; removeOnFailure=($2); IFS=${old_IFS}
+      shift;;
+    --required-files)
+      old_IFS="${IFS}"; IFS=';'; requiredfiles=($2); IFS=${old_IFS}
+      shift;;
+    --skip-return-code) (( skip_code = ${2} )); shift;;
+    --wd) wd="$2"; shift;;
+    --) shift; break;;
+    *) echo "Bad argument $1" 1>&2; usage 1
+  esac
+  shift
 done
 
 if [[ -z "$wd" ]]; then
@@ -91,20 +86,22 @@ fi
 
 # Clean the current working directory of everything except what we know
 # we want to keep.
-shopt -s nullglob
-for i in *; do
-  (( found = 0 ))
-  for j in "${datafiles[@]}"; do
-    if [[ "$i" == "$j" ]]; then
-      (( found = 1 ))
-      break;
+if (( want_clean )); then
+  shopt -s nullglob
+  for i in *; do
+    (( found = 0 ))
+    for j in "${datafiles[@]}"; do
+      if [[ "$i" == "$j" ]]; then
+        (( found = 1 ))
+        break;
+      fi
+    done
+
+    if ! (( ${found:-0} )); then
+      rm -rv${vopt} "${i}"
     fi
   done
-
-  if ! (( ${found:-0} )); then
-    rm -rv${vopt} "${i}"
-  fi
-done
+fi
 
 # Make sure required files exist.
 declare -a missingfiles
