@@ -1,6 +1,11 @@
+include_guard(DIRECTORY)
+
+cmake_policy(PUSH)
+cmake_minimum_required(VERSION 3.14...3.18 FATAL_ERROR)
+
 include(CMakeParseArguments)
 
-INCLUDE(CheckUpsVersion)
+include(CheckUpsVersion)
 
 set(CCV_DEFAULT_RECURSIVE FALSE
   CACHE BOOL "Default setting for recursive checks by checkClassVersion (may be time-consuming)."
@@ -92,3 +97,5 @@ function(check_class_version)
     endif()
   ENDIF()
 endfunction()
+
+cmake_policy(POP)
