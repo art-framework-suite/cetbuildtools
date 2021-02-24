@@ -1,35 +1,30 @@
-#
-#  cetbuildtools/CMakeLists.txt
-#
-#  CMake build file for cetbuildtools
-#  This simply copies files into an install directory - there is no build
-#
-#  install steps:
-#  cd /path/to/build/directory
-#  source /path/to/cetbuildtools/ups/setup_for_development
-#  cmake [-DCMAKE_INSTALL_PREFIX=/install/path] $CETBUILDTOOLS_SOURCE
-#  make install
-#  make package (tar file for ups)
+# Required to keep CMake happy.
+cmake_minimum_required(VERSION 3.18.2 FATAL_ERROR)
 
-CMAKE_MINIMUM_REQUIRED (VERSION 3.3)
-project(cetbuildtools NONE)
+find_package(cetmodules 2.10.00)
 
-set(cetbuildtools_BINDIR "${PROJECT_SOURCE_DIR}/bin")
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/Modules)
+# Project information.
+project(cetbuildtools VERSION 8.00.00 LANGUAGES NONE)
 
+# No tests of cetmodules.
+set(BUILD_TESTING OFF)
+
+# Other configuration.
+set(${PROJECT_NAME}_BIN_DIR "")
+set(${PROJECT_NAME}_FHICL_DIR "")
+set(${PROJECT_NAME}_INCLUDE_DIR "")
+set(${PROJECT_NAME}_LIBRARY_DIR "")
+set(${PROJECT_NAME}_NOARCH TRUE)
+
+# Basic build environment.
 include(CetCMakeEnv)
+cet_cmake_env()
 
-# cetbuildtools has no architecture dependence
-cet_cmake_env( noarch )
+####################################
+# Build components.
+####################################
 
-# source code
-add_subdirectory(templates)
-add_subdirectory(Modules)
-add_subdirectory(bin)
-add_subdirectory(ups)
-add_subdirectory(example)
-add_subdirectory(src)
-add_subdirectory(test)
-
-# packaging utility
-include(UseCPack)
+####################################
+# Generate CMake (and UPS, if appropriate) configuration files and
+# packaging.
+cet_cmake_config(NO_CMAKE_CONFIG)

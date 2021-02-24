@@ -8,3 +8,8 @@ Description:
 cetbuildtools contains various utility scripts and templates used to
 create a product according to the CET conventions.
 https://cdcvs.fnal.gov/redmine/projects/cetbuildtools/wiki
+
+Since 8.00.00, this package is vestigial, and produces only a UPS
+wrapper setting up the cetmodules package for use. See
+https://github.com/FNALssi/cetmodules/.
+
