@@ -1,10 +1,10 @@
 # Required to keep CMake happy.
 cmake_minimum_required(VERSION 3.18.2 FATAL_ERROR)
 
-find_package(cetmodules 2.11.00)
+find_package(cetmodules 2.12.00 REQUIRED)
 
 # Project information.
-project(cetbuildtools VERSION 8.01.00 LANGUAGES NONE)
+project(cetbuildtools VERSION 8.02.01 LANGUAGES NONE)
 
 # No tests of cetmodules.
 set(BUILD_TESTING OFF)
@@ -20,6 +20,9 @@ set(${PROJECT_NAME}_NOARCH TRUE)
 include(CetCMakeEnv)
 cet_cmake_env()
 
+# Make sure this is a transitive dependency.
+cet_find_package(cetmodules REQUIRED)
+
 ####################################
 # Build components.
 ####################################
@@ -27,4 +30,4 @@ cet_cmake_env()
 ####################################
 # Generate CMake (and UPS, if appropriate) configuration files and
 # packaging.
-cet_cmake_config(NO_CMAKE_CONFIG)
+cet_cmake_config(CONFIG_POST_DEPS config/${PROJECT_NAME}-quiet-warnings.cmake)
