@@ -248,7 +248,8 @@ product		version		qual	flags		<table_format=2>
 #> gcc		v9_3_0		e20
 #> clang	v7_0_0		c7
 #> noqualprod	vh_ii_jj	-	only_for_build
-cetmodules	v2_12_01 	-	only_for_build
+cetmodules	v2_13_00 	-	only_for_build
+cetmodules	v2_13_00 	-
 end_product_list
 ####################################
 
@@ -302,11 +303,8 @@ end_product_list
 #   *required* unless the only_for_build flag is specified, in which
 #   case it is optional.
 #
-qualifier	art		clang	gcc	compiler	notes
-#> e20:debug	e20:debug	-	-nq-	gcc		-std=c++17
-#> e20:prof	e20:prof	-	-nq-	gcc		-std=c++17
-#> c7:debug	c7:debug	-nq-	-	clang		-std=c++17
-#> c7:prof	c7:prof		-nq-	-	clang		-std=c++17
+qualifier	cetmodules
+-nq-		-nq-
 end_qualifier_list
 ####################################
 
@@ -316,7 +314,6 @@ end_qualifier_list
 # Any lines between "table_fragment_begin" and "table_fragment_end" will
 # be copied to the table file verbatim.
 table_fragment_begin
-#>  ...
 table_fragment_end
 ####################################
 
