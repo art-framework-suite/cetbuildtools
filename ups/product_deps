@@ -248,8 +248,8 @@ product		version		qual	flags		<table_format=2>
 #> gcc		v9_3_0		e20
 #> clang	v7_0_0		c7
 #> noqualprod	vh_ii_jj	-	only_for_build
-cetmodules	v2_13_04 	-	only_for_build
-cetmodules	v2_13_04 	-
+cetmodules	v2_13_05 	-	only_for_build
+cetmodules	v2_13_05 	-
 end_product_list
 ####################################
 
