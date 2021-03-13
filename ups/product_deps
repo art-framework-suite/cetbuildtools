@@ -241,15 +241,9 @@ no_fq_dir
 #   entry to match for a given product.
 #
 product		version		qual	flags		<table_format=2>
-#> art		v2_08_02
-#> someprod	vx_yy_zz
-#> anotherprod	va_bb_cc	
-#> gcc		v8_2_0		e19
-#> gcc		v9_3_0		e20
-#> clang	v7_0_0		c7
-#> noqualprod	vh_ii_jj	-	only_for_build
-cetmodules	v2_13_05 	-	only_for_build
-cetmodules	v2_13_05 	-
+# Two entries needed here to satisfy old setup_for_development scripts.
+cetmodules	v2_14_00 	-	only_for_build
+cetmodules	v2_14_00 	-
 end_product_list
 ####################################
 
