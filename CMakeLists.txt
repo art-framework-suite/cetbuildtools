@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.18.2 FATAL_ERROR)
 find_package(cetmodules 2.16.00 REQUIRED)
 
 # Project information.
-project(cetbuildtools VERSION 8.06.00 LANGUAGES NONE)
+project(cetbuildtools VERSION 8.06.01 LANGUAGES NONE)
 
 # No tests of cetmodules.
 set(BUILD_TESTING OFF)
