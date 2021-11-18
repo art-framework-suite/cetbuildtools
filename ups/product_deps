@@ -242,8 +242,8 @@ no_fq_dir
 #
 product		version		qual	flags		<table_format=2>
 # Two entries needed here to satisfy old setup_for_development scripts.
-cetmodules	v2_29_10	-	only_for_build
-cetmodules	v2_29_10	-
+cetmodules	v2_29_11	-	only_for_build
+cetmodules	v2_29_11	-
 end_product_list
 ####################################
 
